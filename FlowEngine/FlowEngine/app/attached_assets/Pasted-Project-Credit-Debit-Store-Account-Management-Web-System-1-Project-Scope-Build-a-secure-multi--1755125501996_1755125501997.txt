@@ -1,0 +1,254 @@
+Project: Credit/Debit Store Account Management Web System
+1) Project Scope
+
+Build a secure multi-store web application that supports:
+
+User authentication (Log in, Sign Up).
+
+Managing stores (Add / Edit / Delete).
+
+Recording daily reports for each store.
+
+Displaying running balances: amount supplied (credit), amount remaining (outstanding at store owner).
+
+Adding new stores and linking all data to a relational database.
+
+2) User Roles
+
+Admin: Full access to all users and stores.
+
+Store Owner: Access to their own profile and stores they own.
+
+Clerk (optional): Can read/add data for assigned stores, cannot delete stores or users.
+
+3) Authentication & Permissions
+
+Sign Up (email + password).
+
+Log In (email + password).
+
+Store passwords using strong hashing (bcrypt or argon2).
+
+Sessions via JWT (HTTP-only cookie) or server-side sessions.
+
+Role-Based Access Control (RBAC) on each endpoint/page.
+
+Email must be unique and optionally verified.
+
+4) Core Entities (Relational Model)
+
+users
+
+id (unique identifier)
+
+email (unique, required)
+
+password_hash (hashed password)
+
+role (Admin, StoreOwner, Clerk)
+
+created_at
+
+updated_at
+
+stores
+
+id (unique identifier)
+
+name (store name)
+
+owner_id (foreign key to users)
+
+created_at
+
+updated_at
+
+store_users (optional linking table)
+
+id
+
+store_id
+
+user_id
+
+role_in_store (Owner, Clerk)
+
+created_at
+
+transactions
+
+id
+
+store_id
+
+date (report date)
+
+amount_supplied (credit amount)
+
+amount_remaining (debit amount)
+
+notes (optional)
+
+created_by (user ID)
+
+created_at
+
+updated_at
+
+balances_view (optional as DB view or computed in backend)
+
+Per store: total supplied, total remaining, net balance.
+
+5) Business Rules
+
+A user can only view/edit data for their own stores (unless Admin).
+
+amount_supplied and amount_remaining must be non-negative, with 2 decimal precision.
+
+A daily report represents one day for a store; may enforce single daily entry or allow multiple.
+
+Deleting a store is done via soft delete or blocked if transactions exist.
+
+Dates stored in UTC.
+
+6) Web Pages (UI)
+
+Sign Up Page
+
+Fields: Email, Password, Confirm Password.
+
+Button: “Sign Up”.
+
+Log In Page
+
+Fields: Email, Password.
+
+Button: “Log In”.
+
+Dashboard
+
+List of stores user can access.
+
+KPIs per store: total supplied, total remaining, net balance.
+
+Buttons: “Add Store”, “Add Daily Report”.
+
+Stores Page
+
+Table: Store Name, Owner, Total Supplied, Total Remaining, Net Balance, Actions (View/Edit/Delete).
+
+Button: “Add New Store”.
+
+Store Details Page
+
+Store info.
+
+Tabs:
+
+Daily Reports: table with date, amount supplied, amount remaining, notes, created by, actions.
+
+Balance Summary: totals and net.
+
+Members (optional): list/add/remove users from store.
+
+Button: “Add Daily Report”.
+
+Add/Edit Daily Report Page
+
+Fields: Date, Amount Supplied, Amount Remaining, Notes.
+
+Data validation.
+
+Profile Page
+
+Change password, view email and role.
+
+Admin Panel (optional)
+
+Manage all users and stores.
+
+7) REST API
+
+Authentication
+
+POST /api/auth/signup — Create account.
+
+POST /api/auth/login — Log in.
+
+POST /api/auth/logout — Log out.
+
+Stores
+
+GET /api/stores — List stores.
+
+POST /api/stores — Add store.
+
+GET /api/stores/:id — Store details.
+
+PATCH /api/stores/:id — Update store.
+
+DELETE /api/stores/:id — Delete store.
+
+Daily Reports
+
+GET /api/stores/:id/transactions — List reports.
+
+POST /api/stores/:id/transactions — Add report.
+
+PATCH /api/transactions/:txn_id — Update report.
+
+DELETE /api/transactions/:txn_id — Delete report.
+
+Totals
+
+GET /api/stores/:id/balance — Store balance summary.
+
+GET /api/reports/daily?date=YYYY-MM-DD — Reports for a specific day.
+
+8) Validation Rules
+
+Email: valid format and unique.
+
+Password: at least 8 characters, with at least one number and one letter.
+
+Store name: required, max 150 chars.
+
+Report amounts: numeric, ≥ 0, precision 2.
+
+Authorization checked on all read/write operations.
+
+9) Security Requirements
+
+Store JWT in HTTP-only cookie.
+
+Rate-limit authentication endpoints.
+
+CSRF protection if cookies/sessions are used.
+
+Sanitize input and use parameterized queries to prevent SQL injection.
+
+Audit fields (created_by, timestamps) for all actions.
+
+10) Non-Functional Requirements
+
+Relational database (MySQL or PostgreSQL).
+
+Performance: list pages load in < 2 seconds for up to 10k transactions with pagination.
+
+Backup: automated daily database backup.
+
+11) Acceptance Criteria
+
+New user can sign up and log in.
+
+Store owner can add a store and see it on dashboard.
+
+Daily report can be added and viewed for a store.
+
+Balance summary updates automatically when a report is added.
+
+Admin can view all stores and users.
+
+Unauthorized access returns 403 Forbidden.
+
+Invalid data returns clear 400 Bad Request errors.
